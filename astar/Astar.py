@@ -17,8 +17,13 @@ def AStar(start: list[list[int]], end: list[list[int]]) -> int:
     close.clear()
     path.clear()
     solution.clear()
+    endMap = {}
+    for i in range(n):
+        for j in range(n):
+            endMap[end[i][j]] = (i, j)
     ID = 0
-    open.append(Node(start, H(start, end), 0, H(start, end), ID, ID))
+    open.append(Node(start, 0, 0, H(start, end, endMap), ID, ID))
+    open[0].f = open[0].h
     ID += 1
     while len(open) > 0:
         open.sort(key=lambda s: s.f)
@@ -27,7 +32,7 @@ def AStar(start: list[list[int]], end: list[list[int]]) -> int:
         close.add(hashCode(cur.stat))
 
         # 是否完成
-        if success(cur.stat, end):
+        if success(cur.stat, end, endMap):
             return cur.g
 
         # 查找空格位置
@@ -48,13 +53,13 @@ def AStar(start: list[list[int]], end: list[list[int]]) -> int:
             new = Node(cur.stat, 0, cur.g + 1, 0, ID, cur.cID)
             new.stat[cx][cy], new.stat[nx][ny] = new.stat[nx][ny], new.stat[cx][cy]
             ID += 1
-            new.h = H(new.stat, end)
+            new.h = H(new.stat, end, endMap)
             new.f = F(new)
             # 表中没有该状态
             if hashCode(new.stat) not in close:
                 index = -1
                 for i in range(len(open)):
-                    if success(new.stat, open[i].stat):
+                    if success(new.stat, open[i].stat, endMap):
                         index = i
                         break
                 # 找到该状态
@@ -100,12 +105,12 @@ def outExchangPath(pID: int, s: int, step: int, cx: int, cy: int) -> [int, int]:
 
 
 # 评估函数
-def H(cur: list[list[int]], end: list[list[int]]) -> int:
+def H(cur: list[list[int]], end: list[list[int]], endMap: map) -> int:
     h = 0
     for i in range(len(cur)):
         for j in range(len(cur)):
             if cur[i][j] != end[i][j]:
-                h += abs(cur[i][j] - end[i][j])
+                h += abs(i - endMap[cur[i][j]][0]) + abs(j - endMap[cur[i][j]][1])
     return h
 
 
@@ -115,8 +120,8 @@ def F(node: Node) -> int:
 
 
 # 是否完成
-def success(cur: list[list[int]], end: list[list[int]]) -> bool:
-    return H(cur, end) == 0
+def success(cur: list[list[int]], end: list[list[int]], endMap: map) -> bool:
+    return H(cur, end, endMap) == 0
 
 
 # 求状态对应的哈希
